@@ -74,24 +74,13 @@ def get_columns_info():
         table = Table(table, meta, autoload=True, autoload_with=engine)
         primaryKeyColNames = [pk_column.name for pk_column in table.primary_key.columns.values()]
         # 处理数据
-        if len(primaryKeyColNames) <= 1:
-            key = ""
-            if len(primaryKeyColNames) == 1:
-                key = primaryKeyColNames[0]
-            for column in columns:
-                column['type'] = str(column['type'])
-                if column['name'] == key:
-                    column['isPrimaryKey'] = 'true'
-                else:
-                    column['isPrimaryKey'] = 'false'
-        else:
-            for key in primaryKeyColNames:
-                for column in columns:
-                    column['type'] = str(column['type'])
+        for column in columns:
+            column['type'] = str(column['type'])
+            # 如果有主键
+            if len(primaryKeyColNames) > 0:
+                for key in primaryKeyColNames:
                     if column['name'] == key:
                         column['isPrimaryKey'] = 'true'
-                    else:
-                        column['isPrimaryKey'] = 'false'
         return jsonify(ok(columns))
 
 
