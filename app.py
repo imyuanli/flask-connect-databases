@@ -11,7 +11,6 @@ from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 
-
 def connect_db(info, node_type):
     type_dict = {
         "Oracle": "oracle",
@@ -61,11 +60,11 @@ def get_tables():
 @app.route('/get_columns_info', methods=['POST'])
 def get_columns_info():
     res = request.json
-    data = res['data']
+    data = res['item']
     table = data.get('table')
     data_node = data.get('dataNode')
     node_type = data_node.get('type')
-    info = data_node[node_type]
+    info = data_node.get(node_type)
     # 创建连接
     engine = connect_db(info, node_type)
     insp = inspect(engine)
@@ -75,10 +74,12 @@ def get_columns_info():
         table = Table(table, meta, autoload=True, autoload_with=engine)
         primaryKeyColNames = [pk_column.name for pk_column in table.primary_key.columns.values()]
         # 处理数据
-        if len(primaryKeyColNames) == 1:
-            key = primaryKeyColNames[0]
+        if len(primaryKeyColNames) <= 1:
+            key = ""
+            if len(primaryKeyColNames) == 1:
+                key = primaryKeyColNames[0]
             for column in columns:
-                column['type'] = column['type'].__class__.__name__
+                column['type'] = str(column['type'])
                 if column['name'] == key:
                     column['isPrimaryKey'] = 'true'
                 else:
@@ -86,6 +87,7 @@ def get_columns_info():
         else:
             for key in primaryKeyColNames:
                 for column in columns:
+                    column['type'] = str(column['type'])
                     if column['name'] == key:
                         column['isPrimaryKey'] = 'true'
                     else:
