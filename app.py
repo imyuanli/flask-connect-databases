@@ -1,17 +1,13 @@
-import json
-
-import demjson
 from flask import Flask
 from flask import jsonify
 from flask import request
-from flask_sqlalchemy import SQLAlchemy
-from impala.dbapi import connect
 from sqlalchemy import create_engine, inspect, MetaData, Table
-from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 
+
 def connect_db(info, node_type):
+    # 不同类型不同的 dialects+driver
     type_dict = {
         "Oracle": "oracle",
         "MySQL": "mysql+pymysql",
@@ -24,6 +20,7 @@ def connect_db(info, node_type):
     host = info.get('host')
     port = info.get('port')
     database = info.get('database')
+
     # 连接方式
     db_url = f"{driver}://{username}:{password}@{host}:{port}/{database}"
     if node_type == "Hive":
@@ -42,8 +39,11 @@ def test_db_connect():
     data_node = res['dataNode']
     node_type = res['type']
     info = data_node[node_type]
-    connect_db(info, node_type)
-    return jsonify(ok(""))
+    engine = connect_db(info, node_type)
+    # 创建连接
+    conn = engine.connect()
+    conn.close()
+    return jsonify(ok("成功"))
 
 
 @app.route('/get_tables', methods=['POST'])
